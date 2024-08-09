@@ -25,22 +25,17 @@ int main(int argc, char* args[]) {
   triangle_nofill(t0[0], t0[1], t0[2], image, blue);
 
   Vec2i inside(55, 115);
-  Vec2i outside(60, 140);
 
-  float totalArea = calculateArea(t0[0], t0[1], t0[2]);
-  float aArea = calculateArea(t0[0], t0[1], outside);
-  float bArea = calculateArea(t0[1], t0[2], outside);
-  float cArea = calculateArea(t0[2], t0[0], outside);
+  Vec2i vs1(t0[1] - t0[0]);
+  Vec2i vs2(t0[2] - t0[0]);
+  Vec2i q = Vec2i(inside - t0[0]);
 
-  float alpha = aArea / totalArea;
-  float beta = bArea / totalArea;
-  float gamma = cArea / totalArea;
+  float s = (float)(crossProduct(q, vs2)) / (crossProduct(vs1, vs2));
+  float t = (float)(crossProduct(vs1, q)) / (crossProduct(vs1, vs2));
 
-  std::cout << totalArea << '\n';
-  std::cout << aArea << '\n';
-  std::cout << bArea << '\n';
-  std::cout << cArea << '\n';
-  std::cout << alpha << " " << beta << " " << gamma << '\n';
+  std::cout << s << '\n';
+  std::cout << t << '\n';
+  std::cout << 1. - s - t << '\n';
 
   image.flip_vertically();
   image.write_tga_file("output.tga");
