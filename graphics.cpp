@@ -1,5 +1,10 @@
 #include "graphics.h"
 
+#include "geometry.h"
+
+float calculateArea(const Vec2i& v1, const Vec2i& v2, const Vec2i& v3) {
+  return std::abs((v2 - v1) ^ (v3 - v1)) / 2.0f;
+}
 void line(Vec2i t0, Vec2i t1, TGAImage& image, TGAColor color) {
   bool steep = false;
   if (std::abs(t0.x - t1.x) < std::abs(t0.y - t1.y)) {
@@ -105,5 +110,25 @@ void scanline_triangle_fill(Vec2i t0, Vec2i t1, Vec2i t2, TGAImage& image,
       }
     }
     line(Vec2i(minX, i), Vec2i(maxX, i), image, color);
+  }
+}
+
+void BarycentricScanline_triangle_fill(Vec2i t0, Vec2i t1, Vec2i t2,
+                                       TGAImage& image, TGAColor color) {
+  int minX = std::min(std::min(t0.x, t1.x), t2.x);
+  int minY = std::min(std::min(t0.y, t1.y), t2.y);
+  int maxX = std::max(std::max(t0.x, t1.x), t2.x);
+  int maxY = std::max(std::max(t0.y, t1.y), t2.y);
+  Vec2i vs1(t1 - t0);
+  Vec2i vs2(t2 - t0);
+  for (int x = minX; x <= maxX; x++) {
+    for (int y = minY; y <= maxY; y++) {
+      Vec2i q = Vec2i(Vec2i(x, y) - t0);
+      float s = (q ^ vs2) / (vs1 ^ vs2);
+      float t = (vs1 ^ q) / (vs1 ^ vs2);
+      if ((s >= 0) && (t >= 0) && (s + t <= 1)) {
+        image.set(x, y, color);
+      }
+    }
   }
 }
