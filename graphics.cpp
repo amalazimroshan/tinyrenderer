@@ -29,6 +29,14 @@ void line(Vec2i t0, Vec2i t1, TGAImage& image, TGAColor color) {
     }
   }
 }
+
+// triangle no fill///
+void triangle_nofill(Vec2i t0, Vec2i t1, Vec2i t2, TGAImage& image,
+                     TGAColor color) {
+  line(t0, t1, image, color);
+  line(t1, t2, image, color);
+  line(t2, t0, image, color);
+}
 ////////// standard traingle fill ///////////////////
 void fillBottomTriangle(Vec2i t0, Vec2i t1, Vec2i t2, TGAImage& image,
                         TGAColor color) {
