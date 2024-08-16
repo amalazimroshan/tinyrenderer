@@ -100,8 +100,6 @@ void scanline_triangle_fill(Vec2i t0, Vec2i t1, Vec2i t2, TGAImage& image,
   for (int i = bottomLeft.y; i <= topRight.y; i++) {
     int minX = topRight.x + 1;
     int maxX = bottomLeft.x - 1;
-    bool foundMatch = false;
-
     for (int j = bottomLeft.x; j <= topRight.x; j++) {
       TGAColor currentColor = image.get(j, i);
       if (currentColor == color) {

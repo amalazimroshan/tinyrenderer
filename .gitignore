@@ -3,3 +3,4 @@ output.tga
 gmon.out
 analysis.txt
 main
+*.o
