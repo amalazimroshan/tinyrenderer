@@ -1,6 +1,10 @@
 #include "graphics.h"
 
 #include "geometry.h"
+
+// float calculateArea(const Vec2i& v1, const Vec2i& v2, const Vec2i& v3) {
+//   return std::abs((v2 - v1) ^ (v3 - v1)) / 2.0f;
+// }
 void line(Vec2i t0, Vec2i t1, TGAImage& image, TGAColor color) {
   bool steep = false;
   if (std::abs(t0.x - t1.x) < std::abs(t0.y - t1.y)) {
@@ -106,42 +110,36 @@ void scanline_triangle_fill(Vec2i t0, Vec2i t1, Vec2i t2, TGAImage& image,
     line(Vec2i(minX, i), Vec2i(maxX, i), image, color);
   }
 }
-Vec3f barycentric(const Vec3f* A, const Vec3f* B, const Vec3f* C,
-                  const Vec3f* P) {
-  Vec3f AB = *B - *A;
-  Vec3f AC = *C - *A;
-  Vec3f AP = *P - *A;
-  Vec3f crossAC_AB = cross(AC, AB);
-  Vec3f crossAP_AB = cross(AP, AB);
-  Vec3f crossAC_AP = cross(AC, AP);
-  float u = crossAP_AB.norm() / crossAC_AB.norm();
-  float v = crossAC_AP.norm() / crossAC_AB.norm();
-  float w = 1.0f - u - v;
-  return Vec3f(u, v, w);
-}
-void barycentricScanline_triangle_fill(Vec3f* pts, float* zbuffer,
-                                       TGAImage& image, TGAColor color) {
-  Vec2f bboxmin(std::numeric_limits<float>::max(),
-                std::numeric_limits<float>::max());
-  Vec2f bboxmax(-std::numeric_limits<float>::max(),
-                -std::numeric_limits<float>::max());
-  Vec2f clamp(image.get_width() - 1, image.get_height() - 1);
-  for (int i = 0; i < 3; i++) {
-    for (int j = 0; j < 2; j++) {
-      bboxmin[j] = std::max(0.0f, std::min(bboxmin[j], pts[i][j]));
-      bboxmax[j] = std::min(clamp[j], std::max(bboxmax[j], pts[i][j]));
-    }
+
+Vec3f barycentric(Vec3f v0, Vec3f v1, Vec3f v2, Vec3f p) {
+  Vec3f s[2];
+  for (int i = 2; i--;) {
+    s[i][0] = v2[i] - v0[i];
+    s[i][1] = v1[i] - v0[i];
+    s[i][2] = v0[i] - p[i];
   }
-  Vec3f P;
-  for (P.x = bboxmin.x; P.x <= bboxmax.x; P.x++) {
-    for (P.y = bboxmin.y; P.y <= bboxmax.y; P.y++) {
-      Vec3f bc_screen = barycentric(&pts[0], &pts[1], &pts[2], &P);
-      if (bc_screen[0] < 0 || bc_screen[1] < 0 || bc_screen[2] < 0) continue;
-      P.z = 0;
-      for (int i = 0; i < 3; i++) P.z += pts[i][2] * bc_screen[i];
-      if (zbuffer[int(P.x + P.y * 800)] < P.z) {
-        zbuffer[int(P.x + P.y * 800)] = P.z;
-        image.set(P.x, P.y, color);
+  Vec3f u = cross(s[0], s[1]);
+  if (std::abs(u[2]) > 1e-2)
+    return Vec3f(1.f - (u.x + u.y) / u.z, u.y / u.z, u.x / u.z);
+  return Vec3f(-1, 1, 1);
+}
+void BarycentricScanline_triangle_fill(Vec3f* pts, float* zbuffer,
+                                       TGAImage& image, TGAColor color) {
+  int minX = std::min(std::min(pts[0].x, pts[1].x), pts[2].x);
+  int minY = std::min(std::min(pts[0].y, pts[1].y), pts[2].y);
+  int maxX = std::max(std::max(pts[0].x, pts[1].x), pts[2].x);
+  int maxY = std::max(std::max(pts[0].y, pts[1].y), pts[2].y);
+
+  Vec3f p;
+  for (p.x = minX; p.x <= maxX; p.x++) {
+    for (p.y = minY; p.y <= maxY; p.y++) {
+      Vec3f bc_screen = barycentric(pts[0], pts[1], pts[2], p);
+      if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0) continue;
+      p.z = 0;
+      for (int i = 0; i < 3; i++) p.z += pts[i][2] * bc_screen[i];
+      if (zbuffer[int(p.x + p.y * 800)] < p.z) {
+        zbuffer[int(p.x + p.y * 800)] = p.z;
+        image.set(p.x, p.y, color);
       }
     }
   }

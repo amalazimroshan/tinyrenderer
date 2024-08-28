@@ -16,6 +16,7 @@ Vec3f world2screen(Vec3f v) {
 int main(int argc, char* args[]) {
   TGAImage image(width, height, TGAImage::RGB);
   model = new Model("obj/african_head.obj");
+
   Vec3f light_dir(0, 0, -1);
   float* zbuffer = new float[width * height];
   for (int i = width * height; i--;
@@ -24,17 +25,19 @@ int main(int argc, char* args[]) {
     std::vector<int> face = model->face(i);
     Vec3f pts[3];
     Vec3f world_coords[3];
+    for (int i = 0; i < 3; i++) pts[i] = world2screen(model->vert(face[i]));
     for (int j = 0; j < 3; j++) {
-      pts[j] = world2screen(model->vert(face[j]));
-      world_coords[j] = model->vert(face[j]);
+      Vec3f v = model->vert(face[j]);
+      world_coords[j] = v;
     }
-    Vec3f n = cross((world_coords[2] - world_coords[0]),
+    Vec3f n = cross((world_coords[2] - world_coords[1]),
                     (world_coords[1] - world_coords[0]));
     n.normalize();
     float intensity = n * light_dir;
-    barycentricScanline_triangle_fill(
-        pts, zbuffer, image,
-        TGAColor(intensity * 255, intensity * 255, intensity * 255, 255));
+    if (intensity > 0)
+      BarycentricScanline_triangle_fill(
+          pts, zbuffer, image,
+          TGAColor(intensity * 255, intensity * 255, intensity * 255, 255));
   }
 
   image.flip_vertically();
