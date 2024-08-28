@@ -2,9 +2,9 @@
 
 #include "geometry.h"
 
-float calculateArea(const Vec2i& v1, const Vec2i& v2, const Vec2i& v3) {
-  return std::abs((v2 - v1) ^ (v3 - v1)) / 2.0f;
-}
+// float calculateArea(const Vec2i& v1, const Vec2i& v2, const Vec2i& v3) {
+//   return std::abs((v2 - v1) ^ (v3 - v1)) / 2.0f;
+// }
 void line(Vec2i t0, Vec2i t1, TGAImage& image, TGAColor color) {
   bool steep = false;
   if (std::abs(t0.x - t1.x) < std::abs(t0.y - t1.y)) {
@@ -111,23 +111,35 @@ void scanline_triangle_fill(Vec2i t0, Vec2i t1, Vec2i t2, TGAImage& image,
   }
 }
 
-void BarycentricScanline_triangle_fill(Vec3f* pts, TGAImage& image,
-                                       TGAColor color) {
+Vec3f barycentric(Vec3f v0, Vec3f v1, Vec3f v2, Vec3f p) {
+  Vec3f s[2];
+  for (int i = 2; i--;) {
+    s[i][0] = v2[i] - v0[i];
+    s[i][1] = v1[i] - v0[i];
+    s[i][2] = v0[i] - p[i];
+  }
+  Vec3f u = cross(s[0], s[1]);
+  if (std::abs(u[2]) > 1e-2)
+    return Vec3f(1.f - (u.x + u.y) / u.z, u.y / u.z, u.x / u.z);
+  return Vec3f(-1, 1, 1);
+}
+void BarycentricScanline_triangle_fill(Vec3f* pts, float* zbuffer,
+                                       TGAImage& image, TGAColor color) {
   int minX = std::min(std::min(pts[0].x, pts[1].x), pts[2].x);
   int minY = std::min(std::min(pts[0].y, pts[1].y), pts[2].y);
   int maxX = std::max(std::max(pts[0].x, pts[1].x), pts[2].x);
   int maxY = std::max(std::max(pts[0].y, pts[1].y), pts[2].y);
 
-  Vec3f vs1(pts[1] - pts[0]);
-  Vec3f vs2(pts[2] - pts[0]);
-  Vec3f P;
-  for (int x = minX; x <= maxX; x++) {
-    for (int y = minY; y <= maxY; y++) {
-      Vec3f q = Vec3f(Vec3f(x, y, 0) - pts[0]);
-      float s = cross(q, vs2) / cross(vs1, vs2);
-      float t = (vs1 ^ q) / (vs1 ^ vs2);
-      if ((s >= 0) && (t >= 0) && (s + t <= 1)) {
-        image.set(x, y, color);
+  Vec3f p;
+  for (p.x = minX; p.x <= maxX; p.x++) {
+    for (p.y = minY; p.y <= maxY; p.y++) {
+      Vec3f bc_screen = barycentric(pts[0], pts[1], pts[2], p);
+      if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0) continue;
+      p.z = 0;
+      for (int i = 0; i < 3; i++) p.z += pts[i][2] * bc_screen[i];
+      if (zbuffer[int(p.x + p.y * 800)] < p.z) {
+        zbuffer[int(p.x + p.y * 800)] = p.z;
+        image.set(p.x, p.y, color);
       }
     }
   }
