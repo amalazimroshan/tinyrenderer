@@ -16,6 +16,9 @@ Vec3f world2screen(Vec3f v) {
 int main(int argc, char* args[]) {
   TGAImage image(width, height, TGAImage::RGB);
   model = new Model("obj/african_head.obj");
+  TGAImage texture;
+  texture.read_tga_file("./african_head_diffuse.tga");
+  texture.flip_vertically();
 
   Vec3f light_dir(0, 0, -1);
   float* zbuffer = new float[width * height];
@@ -23,21 +26,22 @@ int main(int argc, char* args[]) {
        zbuffer[i] = -std::numeric_limits<float>::max());
   for (int i = 0; i < model->nfaces(); i++) {
     std::vector<int> face = model->face(i);
-    Vec3f pts[3];
-    Vec3f world_coords[3];
-    for (int i = 0; i < 3; i++) pts[i] = world2screen(model->vert(face[i]));
+    std::vector<int> uv_indices = model->uv_indices(i);
+
+    Vec3f screen_coords[3], world_coords[3];
+    Vec2f uv_coords[3];
     for (int j = 0; j < 3; j++) {
-      Vec3f v = model->vert(face[j]);
-      world_coords[j] = v;
+      screen_coords[j] = world2screen(model->vert(face[j]));
+      world_coords[j] = model->vert(face[j]);
+      uv_coords[j] = model->uv(uv_indices[j]);
     }
-    Vec3f n = cross((world_coords[2] - world_coords[1]),
-                    (world_coords[1] - world_coords[0]));
-    n.normalize();
-    float intensity = n * light_dir;
-    if (intensity > 0)
-      BarycentricScanline_triangle_fill(
-          pts, zbuffer, image,
-          TGAColor(intensity * 255, intensity * 255, intensity * 255, 255));
+    // Vec3f n = cross((world_coords[2] - world_coords[1]),
+    //                 (world_coords[1] - world_coords[0]));
+    // n.normalize();
+    // float intensity = n * light_dir;
+    // if (intensity > 0)
+    BarycentricScanline_triangle_fill(screen_coords, uv_coords, zbuffer, image,
+                                      texture);
   }
 
   image.flip_vertically();

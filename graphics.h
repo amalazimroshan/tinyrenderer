@@ -17,7 +17,8 @@ void standard_triangle_fill(Vec2i t0, Vec2i t1, Vec2i t2, TGAImage& image,
                             TGAColor color);
 void scanline_triangle_fill(Vec2i t0, Vec2i t1, Vec2i t2, TGAImage& image,
                             TGAColor color);
-void BarycentricScanline_triangle_fill(Vec3f* pts, float* zbuffer,
-                                       TGAImage& image, TGAColor color);
+void BarycentricScanline_triangle_fill(Vec3f* screen_coords, Vec2f* uv_coords,
+                                       float* zbuffer, TGAImage& image,
+                                       TGAImage& texture);
 
 #endif

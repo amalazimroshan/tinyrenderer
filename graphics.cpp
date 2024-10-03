@@ -123,22 +123,39 @@ Vec3f barycentric(Vec3f v0, Vec3f v1, Vec3f v2, Vec3f p) {
     return Vec3f(1.f - (u.x + u.y) / u.z, u.y / u.z, u.x / u.z);
   return Vec3f(-1, 1, 1);
 }
-void BarycentricScanline_triangle_fill(Vec3f* pts, float* zbuffer,
-                                       TGAImage& image, TGAColor color) {
-  int minX = std::min(std::min(pts[0].x, pts[1].x), pts[2].x);
-  int minY = std::min(std::min(pts[0].y, pts[1].y), pts[2].y);
-  int maxX = std::max(std::max(pts[0].x, pts[1].x), pts[2].x);
-  int maxY = std::max(std::max(pts[0].y, pts[1].y), pts[2].y);
+void BarycentricScanline_triangle_fill(Vec3f* screen_coords, Vec2f* uv_coords,
+                                       float* zbuffer, TGAImage& image,
+                                       TGAImage& texture) {
+  int minX = std::min(std::min(screen_coords[0].x, screen_coords[1].x),
+                      screen_coords[2].x);
+  int minY = std::min(std::min(screen_coords[0].y, screen_coords[1].y),
+                      screen_coords[2].y);
+  int maxX = std::max(std::max(screen_coords[0].x, screen_coords[1].x),
+                      screen_coords[2].x);
+  int maxY = std::max(std::max(screen_coords[0].y, screen_coords[1].y),
+                      screen_coords[2].y);
 
   Vec3f p;
   for (p.x = minX; p.x <= maxX; p.x++) {
     for (p.y = minY; p.y <= maxY; p.y++) {
-      Vec3f bc_screen = barycentric(pts[0], pts[1], pts[2], p);
+      Vec3f bc_screen =
+          barycentric(screen_coords[0], screen_coords[1], screen_coords[2], p);
       if (bc_screen.x < 0 || bc_screen.y < 0 || bc_screen.z < 0) continue;
       p.z = 0;
-      for (int i = 0; i < 3; i++) p.z += pts[i][2] * bc_screen[i];
-      if (zbuffer[int(p.x + p.y * 800)] < p.z) {
-        zbuffer[int(p.x + p.y * 800)] = p.z;
+      Vec2f uv(0, 0);
+      for (int i = 0; i < 3; i++) {
+        p.z += screen_coords[i][2] * bc_screen[i];
+        uv.x += uv_coords[i].x * bc_screen[i];
+        uv.y += uv_coords[i].y * bc_screen[i];
+      }
+
+      if (zbuffer[int(p.x + p.y * image.get_width())] < p.z) {
+        zbuffer[int(p.x + p.y * image.get_width())] = p.z;
+
+        // get color from texture
+        int tex_x = uv.x * texture.get_width();
+        int tex_y = uv.y * texture.get_height();
+        TGAColor color = texture.get(tex_x, tex_y);
         image.set(p.x, p.y, color);
       }
     }
