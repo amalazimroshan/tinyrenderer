@@ -1,64 +1,112 @@
+#include <SDL2/SDL.h>
+#include <math.h>
+
 #include <iostream>
 
-#include "display.h"
-#include "geometry.h"
-#include "graphics.h"
-#include "model.h"
-#include "tgaimage.h"
+#include "Renderer.h"
 
-Model* model = NULL;
-const int width = 800;
-const int height = 800;
-Vec3f world2screen(Vec3f v) {
-  return Vec3f(int((v.x + 1.) * width / 2. + .5),
-               int((v.y + 1.) * height / 2. + .5), v.z);
+typedef mat<3, 3, float> Mat3f;
+bool edgeFunction(Vec2f a, Vec2f b, Vec2f p) {
+  Vec2f ab = b - a;
+  Vec2f ap = a - p;
+  Vec3f cp = cross(Vec3f(ab.x, ab.y, 0), Vec3f(ap.x, ap.y, 0));
+  return cp.z > 0;
 }
-int main(int argc, char* args[]) {
-  TGAImage image(width, height, TGAImage::RGB);
-  model = new Model("obj/african_head.obj");
-  TGAImage texture;
-  texture.read_tga_file("./african_head_diffuse.tga");
-  texture.flip_vertically();
-
-  Vec3f light_dir(0, 0, -1);
-  float* zbuffer = new float[width * height];
-  for (int i = width * height; i--;
-       zbuffer[i] = -std::numeric_limits<float>::max());
-  for (int i = 0; i < model->nfaces(); i++) {
-    std::vector<int> face = model->face(i);
-    std::vector<int> uv_indices = model->uv_indices(i);
-
-    Vec3f screen_coords[3], world_coords[3];
-    Vec2f uv_coords[3];
-    for (int j = 0; j < 3; j++) {
-      screen_coords[j] = world2screen(model->vert(face[j]));
-      world_coords[j] = model->vert(face[j]);
-      uv_coords[j] = model->uv(uv_indices[j]);
+void renderTriangle(Renderer renderer, Vec2f A, Vec2f B, Vec2f C) {
+  Vec2f minbbox((std::min(std::min(A.x, B.x), C.x)),
+                (std::min(std::min(A.y, B.y), C.y)));
+  Vec2f maxbbox((std::max(std::max(A.x, B.x), C.x)),
+                (std::max(std::max(A.y, B.y), C.y)));
+  Vec2f P;
+  for (P.y = minbbox.y; P.y <= maxbbox.y; P.y++) {
+    for (P.x = minbbox.x; P.x <= maxbbox.x; P.x++) {
+      if (edgeFunction(A, B, P) && edgeFunction(B, C, P) &&
+          edgeFunction(C, A, P)) {
+        renderer.DrawPoint(P.x, P.y, 0x00FFFF);
+      }
     }
-    // Vec3f n = cross((world_coords[2] - world_coords[1]),
-    //                 (world_coords[1] - world_coords[0]));
-    // n.normalize();
-    // float intensity = n * light_dir;
-    // if (intensity > 0)
-    BarycentricScanline_triangle_fill(screen_coords, uv_coords, zbuffer, image,
-                                      texture);
   }
+}
+Mat3f translateMatrix(float tx, float ty) {
+  Mat3f m;
+  m[0] = Vec3f(1, 0, tx);
+  m[1] = Vec3f(0, 1, ty);
+  m[2] = Vec3f(0, 0, 1);
+  return m;
+}
+Mat3f scaleMatrix(float sx, float sy) {
+  Mat3f m;
+  m[0] = Vec3f(sx, 0, 0);
+  m[1] = Vec3f(0, sy, 0);
+  m[2] = Vec3f(0, 0, 1);
+  return m;
+}
+Mat3f rotateMatrix(float angle) {
+  float c = std::cos(angle);
+  float s = std::cos(angle);
+  Mat3f m;
+  m[0] = Vec3f(c, -s, 0);
+  m[1] = Vec3f(s, c, 0);
+  m[2] = Vec3f(0, 0, 1);
+  return m;
+}
+Mat3f perspectiveMatrix() {
+  Mat3f m;
+  m[0] = Vec3f(1, 0, 0);
+  m[1] = Vec3f(0, 1, 0);
+  m[2] = Vec3f(1 / 2, 0, 1);
+  return m;
+}
+Vec3f toHomogenous(const Vec2f& v) { return Vec3f(v.x, v.y, 1.0f); };
+Vec2f fromHomogenous(const Vec3f& v) { return Vec2f(v.x / v.z, v.y / v.z); }
+void transformTriangle(Vec2f (&triangle)[3], const Mat3f& transform) {
+  for (int i = 0; i < 3; i++) {
+    Vec3f homogenous = toHomogenous(triangle[i]);
+    Vec3f transformed = transform * homogenous;
+    triangle[i] = fromHomogenous(transformed);
+  }
+}
 
-  image.flip_vertically();
-  image.write_tga_file("output.tga");
+int main() {
+  Renderer renderer;
+  renderer.Initialize();
 
-  if (!image.read_tga_file("output.tga")) {
-    std::cerr << "Failed to read TGA file." << std::endl;
-    return -1;
+  bool isRunning = true;
+  SDL_Event event;
+  Vec2f triangleA[3] = {
+      Vec2f(100, 100),
+      Vec2f(50, 400),
+      Vec2f(200, 200),
+  };
+
+  std::cout << "-------------------" << std::endl
+            << *triangleA << triangleA[1] << triangleA[2] << std::endl;
+
+  Mat3f translation = translateMatrix(300, 4);
+  Mat3f rotate = rotateMatrix(45);
+  Mat3f perspective = perspectiveMatrix();
+  Mat3f scale = scaleMatrix(2, 2);
+  Mat3f transformMatrix =  //
+      translation          //
+      * perspective
+      // * rotate             //
+      // * scale              //
+      ;
+  transformTriangle(triangleA, transformMatrix);
+
+  std::cout << "-------------------" << std::endl
+            << *triangleA << triangleA[1] << triangleA[2] << std::endl;
+  while (isRunning) {
+    while (SDL_PollEvent(&event)) {
+      if (event.type == SDL_QUIT) isRunning = false;
+      if (event.type == SDL_KEYDOWN) {
+        if (event.key.keysym.sym == SDLK_ESCAPE) isRunning = false;
+      }
+      renderer.Clear();
+      renderTriangle(renderer, triangleA[0], triangleA[1], triangleA[2]);
+      renderer.Present();
+    }
   }
-  SDL_Window* window = nullptr;
-  SDL_Renderer* renderer = nullptr;
-  if (!create_window(image.get_width(), image.get_height(), window, renderer)) {
-    return -1;
-  }
-  display_tga_image(renderer, image);
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(window);
-  SDL_Quit();
+  renderer.Shutdown();
   return 0;
 }
