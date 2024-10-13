@@ -17,11 +17,6 @@ Vec3f light_dir(0, 0, -1);
 Vec3f eye(1, 3, 3);
 Vec3f center(0, 0, 0);
 
-Vec3f world2screen(Vec3f v) {
-  return Vec3f(int((v.x + 1.) * width / 2. + .5),
-               int((v.y + 1.) * height / 2. + .5), v.z);
-}
-
 Matrix viewport(int x, int y, int w, int h) {
   Matrix m = Matrix::identity(4);
   m[0][3] = x + w / 2.f;
