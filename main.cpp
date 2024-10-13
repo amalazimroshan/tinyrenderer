@@ -14,38 +14,38 @@ const int depth = 225;
 
 Vec3f camera(0, 0, 3);
 Vec3f light_dir(0, 0, -1);
+Vec3f eye(1, 3, 3);
+Vec3f center(0, 0, 0);
 
 Vec3f world2screen(Vec3f v) {
   return Vec3f(int((v.x + 1.) * width / 2. + .5),
                int((v.y + 1.) * height / 2. + .5), v.z);
 }
 
-Vec3f m2v(Matrix m) {
-  return Vec3f(m[0][0] / m[3][0],  //
-               m[1][0] / m[3][0],  //
-               m[2][0] / m[3][0]);
-}
-
-Matrix v2m(Vec3f v) {
-  Matrix m;
-  m[0][0] = v.x;
-  m[1][0] = v.y;
-  m[2][0] = v.z;
-  m[3][0] = 1.0f;
-  return m;
-}
-
 Matrix viewport(int x, int y, int w, int h) {
-  Matrix m = Matrix::identity();
-  m[0][0] = w / 2.f;
+  Matrix m = Matrix::identity(4);
   m[0][3] = x + w / 2.f;
-  m[1][1] = h / 2.f;
   m[1][3] = y + h / 2.f;
-  m[2][2] = depth / 2.f;
   m[2][3] = depth / 2.f;
+
+  m[0][0] = w / 2.f;
+  m[1][1] = h / 2.f;
+  m[2][2] = depth / 2.f;
   return m;
 }
-
+Matrix lookat(Vec3f eye, Vec3f center, Vec3f up) {
+  Vec3f z = (eye - center).normalize();
+  Vec3f x = (up ^ z).normalize();
+  Vec3f y = (z ^ x).normalize();
+  Matrix res = Matrix::identity(4);
+  for (int i = 0; i < 3; i++) {
+    res[0][i] = x[i];
+    res[1][i] = y[i];
+    res[2][i] = z[i];
+    res[i][3] = -center[i];
+  }
+  return res;
+}
 int main() {
   TGAImage image(width, height, TGAImage::RGB);
   model = new Model("obj/african_head.obj");
@@ -53,14 +53,11 @@ int main() {
   texture.read_tga_file("./african_head_diffuse.tga");
   texture.flip_vertically();
 
+  Matrix ModelView = lookat(eye, center, Vec3f(0, 1, 0));
   Matrix ViewPort =
       viewport(width / 8, height / 8, width * 3 / 4, height * 3 / 4);
-  Matrix Projection;
-  Projection[0][0] = 1.0f;
-  Projection[1][1] = 1.0f;
-  Projection[2][2] = 1.0f;
-  Projection[3][3] = 1.0f;
-  Projection[3][2] = -1.f / camera.z;
+  Matrix Projection = Matrix::identity(4);
+  Projection[3][2] = -1.f / (eye - center).norm();
 
   float* zbuffer = new float[width * height];
   for (int i = width * height; i--;
@@ -73,7 +70,8 @@ int main() {
     Vec2f uv_coords[3];
     for (int j = 0; j < 3; j++) {
       // screen_coords[j] = world2screen(model->vert(face[j]));
-      screen_coords[j] = m2v(ViewPort * Projection * v2m(model->vert(face[j])));
+      screen_coords[j] = Vec3f(ViewPort * Projection * ModelView *
+                               Matrix(model->vert(face[j])));
       world_coords[j] = model->vert(face[j]);
       uv_coords[j] = model->uv(uv_indices[j]);
     }

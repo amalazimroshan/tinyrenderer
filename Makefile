@@ -12,7 +12,7 @@ SDL2_LDFLAGS = $(shell sdl2-config --libs)
 INCLUDES = -I.
 
 # Source files
-SRCS = main.cpp display.cpp graphics.cpp model.cpp tgaimage.cpp
+SRCS = main.cpp display.cpp geometry.cpp graphics.cpp model.cpp tgaimage.cpp
 
 # Header files
 HEADERS = display.h geometry.h graphics.h model.h tgaimage.h

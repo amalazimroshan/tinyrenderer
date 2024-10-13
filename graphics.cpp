@@ -118,7 +118,7 @@ Vec3f barycentric(Vec3f v0, Vec3f v1, Vec3f v2, Vec3f p) {
     s[i][1] = v1[i] - v0[i];
     s[i][2] = v0[i] - p[i];
   }
-  Vec3f u = cross(s[0], s[1]);
+  Vec3f u = (s[0] ^ s[1]);
   if (std::abs(u[2]) > 1e-2)
     return Vec3f(1.f - (u.x + u.y) / u.z, u.y / u.z, u.x / u.z);
   return Vec3f(-1, 1, 1);
