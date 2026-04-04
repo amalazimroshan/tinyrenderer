@@ -1,0 +1,3 @@
+[submodule "extern/vml"]
+	path = extern/vml
+	url = git@github.com:amalazimroshan/vml.git
