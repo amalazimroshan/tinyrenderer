@@ -1,26 +1,25 @@
+#include <SDL2/SDL.h>
+#include <display.h>
+#include <framebuffer.h>
+#include <tgaimage.h>
+
 #include <cmath>
 
-#include "tgaimage.h"
+const int WINDOW_WIDTH = 960;
+const int WINDOW_HEIGHT = 540;
 
-constexpr TGAColor white = {255, 255, 255, 255};  // attention, BGRA order
-constexpr TGAColor green = {0, 255, 0, 255};
-constexpr TGAColor red = {0, 0, 255, 255};
-constexpr TGAColor blue = {255, 128, 64, 255};
-constexpr TGAColor yellow = {0, 200, 255, 255};
+const TGAColor black = {0, 0, 0, 0};
+const TGAColor white = {255, 255, 255, 255};
 
 int main(int argc, char** argv) {
-  constexpr int width = 64;
-  constexpr int height = 64;
-  TGAImage framebuffer(width, height, TGAImage::RGB);
+  init_display(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-  int ax = 7, ay = 3;
-  int bx = 12, by = 37;
-  int cx = 62, cy = 53;
+  Framebuffer image = Framebuffer(WINDOW_WIDTH, WINDOW_HEIGHT, black);
+  image.set(5, 5, white);
 
-  framebuffer.set(ax, ay, white);
-  framebuffer.set(bx, by, white);
-  framebuffer.set(cx, cy, white);
+  while (poll_events()) {
+    update_display(image);
+  }
 
-  framebuffer.write_tga_file("framebuffer.tga");
-  return 0;
+  destroy_display();
 }

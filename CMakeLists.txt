@@ -20,10 +20,24 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU|Intel")
 endif()
 
 find_package(OpenMP COMPONENTS CXX)
+find_package(SDL2 REQUIRED)
+set(BUILD_TESTING OFF)
+add_subdirectory(extern/vml)
 
-set(SOURCES main.cpp tgaimage.cpp)
+set(SOURCES
+      src/main.cpp
+      src/framebuffer.cpp
+      src/display.cpp
+      src/tgaimage.cpp
+  )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} PRIVATE $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(${PROJECT_NAME} PRIVATE 
+SDL2::SDL2 
+vml
+$<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>)
 
 file(GENERATE OUTPUT .gitignore CONTENT "*")
+
+
