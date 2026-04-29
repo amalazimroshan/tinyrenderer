@@ -5,16 +5,16 @@ Framebuffer::Framebuffer(const int w, const int h, const TGAColor& fill)
   clear(fill);
 }
 
-void Framebuffer::set(const int x, const int y, const TGAColor& c) {
-  if (x < 0 || y < 0 || x >= w || y >= h) return;
-  std::memcpy(data.data() + (x + y * w) * 4, c.bgra, 4);
-}
+// void Framebuffer::set(const int x, const int y, const TGAColor& c) {
+//   if (x < 0 || y < 0 || x >= w || y >= h) return;
+//   std::memcpy(data.data() + (x + y * w) * 4, c.bgra, 4);
+// }
 
 TGAColor Framebuffer::get(const int x, const int y) const {
   if (x < 0 || y < 0 || x >= w || y >= h) return {};
   TGAColor ret = {0, 0, 0, 0, 4};
   const std::uint8_t* p = data.data() + (x + y * w) * 4;
-  for (int i = 0; i < 3; i++) ret.bgra[i] = p[i];
+  for (int i = 0; i < 4; i++) ret.bgra[i] = p[i];
   return ret;
 }
 
