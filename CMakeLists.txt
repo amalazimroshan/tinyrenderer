@@ -24,20 +24,14 @@ find_package(SDL2 REQUIRED)
 set(BUILD_TESTING OFF)
 add_subdirectory(extern/vml)
 
-set(SOURCES
-      src/main.cpp
-      src/framebuffer.cpp
-      src/display.cpp
-      src/tgaimage.cpp
-  )
+file(GLOB_RECURSE SOURCES "src/*.cpp")
+file(GLOB_RECURSE HEADERS "src/*.h")
 
-add_executable(${PROJECT_NAME} ${SOURCES})
+add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
-target_link_libraries(${PROJECT_NAME} PRIVATE 
-SDL2::SDL2 
-vml
-$<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>)
+target_link_libraries(${PROJECT_NAME} PRIVATE
+  SDL2::SDL2
+  vml
+  $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>)
 
 file(GENERATE OUTPUT .gitignore CONTENT "*")
-
-

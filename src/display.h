@@ -1,8 +1,5 @@
 #pragma once
-#include <SDL2/SDL.h>
-#include <framebuffer.h>
-
-#include <iostream>
+#include "framebuffer.h"
 
 bool init_display(int w, int h);
 void update_display(const Framebuffer& fb);

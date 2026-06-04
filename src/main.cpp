@@ -1,67 +1,34 @@
-#include <SDL2/SDL.h>
 #include <display.h>
+#include <draw.h>
 #include <framebuffer.h>
-#include <tgaimage.h>
+#include <model.h>
 
-#include <cmath>
-#include <ctime>
-#include <vml/vector.hpp>
+#include <iostream>
 
-const int WINDOW_WIDTH = 960;
-const int WINDOW_HEIGHT = 540;
+constexpr int WINDOW_WIDTH = 960;
+constexpr int WINDOW_HEIGHT = 960;
 
-constexpr TGAColor black = {0, 0, 0, 255};
-constexpr TGAColor white = {255, 255, 255, 255};
-constexpr TGAColor green = {0, 255, 0, 255};
-constexpr TGAColor red = {0, 0, 255, 255};
-constexpr TGAColor blue = {255, 128, 64, 255};
-constexpr TGAColor yellow = {0, 200, 255, 255};
-
-void line(vml::Vec2i p1, vml::Vec2i p2, Framebuffer& framebuffer,
-          TGAColor color) {
-  bool steep = std::abs(p1.x - p2.x) < std::abs(p1.y - p2.y);
-  if (steep) {
-    std::swap(p1.x, p1.y);
-    std::swap(p2.x, p2.y);
-  }
-  if (p1.x > p2.x) {
-    std::swap(p1.x, p2.x);
-    std::swap(p1.y, p2.y);
-  }
-  int y = p1.y;
-  float error = 0;
-  for (int x = p1.x; x <= p2.x; x++) {
-    if (steep)
-      framebuffer.set(y, x, color);
-    else
-      framebuffer.set(x, y, color);
-    error += (p2.y - p1.y) / static_cast<float>(p2.x - p1.x);
-    if (error > 0.5) {
-      y += p2.y > p1.y ? 1 : -1;
-      error -= 1.0;
-    }
-  }
-}
+constexpr Color black = {0, 0, 0, 255};
+constexpr Color white = {255, 255, 255, 255};
+constexpr Color green = {0, 255, 0, 255};
 
 int main(int argc, char** argv) {
   init_display(WINDOW_WIDTH, WINDOW_HEIGHT);
+  Framebuffer image(WINDOW_WIDTH, WINDOW_HEIGHT, black);
 
-  Framebuffer image = Framebuffer(WINDOW_WIDTH, WINDOW_HEIGHT, black);
+  std::string model_filepath = "obj/boggie/body.obj";
+  Model model(model_filepath);
+  std::cerr << "Loaded " << model.nverts() << " verts, " << model.nfaces()
+            << " faces" << std::endl;
 
-  std::srand(std::time({}));
-  for (int i = 0; i < (1 << 24); i++) {
-    vml::Vec2i p1(rand() % WINDOW_WIDTH, rand() % WINDOW_HEIGHT);
-    vml::Vec2i p2(rand() % WINDOW_WIDTH, rand() % WINDOW_HEIGHT);
-    line(
-        p1, p2, image,
-        {static_cast<uint8_t>(rand() % 255), static_cast<uint8_t>(rand() % 255),
-         static_cast<uint8_t>(rand() % 255),
-         static_cast<uint8_t>(rand() % 255)});
+  for (const std::vector<int>& face : model.faces) {
+    for (size_t i = 0; i < face.size(); i++) {
+      vml::Vec3f v0 = model.verts[face[i]];
+      vml::Vec3f v1 = model.verts[face[(i + 1) % face.size()]];
+      line(world2screen(v0, WINDOW_WIDTH, WINDOW_HEIGHT),
+           world2screen(v1, WINDOW_WIDTH, WINDOW_HEIGHT), image, green);
+    }
   }
-
-  line(vml::Vec2i(20, 30), vml::Vec2i(540, 400), image, blue);
-  line(vml::Vec2i(540, 400), vml::Vec2i(620, 70), image, blue);
-  line(vml::Vec2i(620, 70), vml::Vec2i(20, 30), image, blue);
 
   while (poll_events()) {
     update_display(image);
