@@ -57,12 +57,24 @@ void destroy_display() {
   SDL_Quit();
 }
 
-bool poll_events() {
+bool poll_events(Input& input) {
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
     if (event.type == SDL_QUIT) return false;
     if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE)
       return false;
   }
+
+  const Uint8* keys = SDL_GetKeyboardState(nullptr);
+  input.w = keys[SDL_SCANCODE_W];
+  input.s = keys[SDL_SCANCODE_S];
+  input.a = keys[SDL_SCANCODE_A];
+  input.d = keys[SDL_SCANCODE_D];
+  input.q = keys[SDL_SCANCODE_Q];
+  input.e = keys[SDL_SCANCODE_E];
+  input.z = keys[SDL_SCANCODE_Z];
+  input.x = keys[SDL_SCANCODE_X];
+  input.shift = keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT];
+
   return true;
 }

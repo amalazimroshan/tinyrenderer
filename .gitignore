@@ -1,6 +1,12 @@
 /.vscode
+build/
 output.tga
+framebuffer.tga
 gmon.out
 analysis.txt
 main
 *.o
+perf.data
+perf.data.old
+perf_01.data
+archive/
