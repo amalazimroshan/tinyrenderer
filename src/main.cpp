@@ -1,12 +1,12 @@
-#include "color.h"
-#include <display.h>
-#include <draw.h>
-#include <framebuffer.h>
-#include <model.h>
-#include <transform.h>
-
 #include <chrono>
 #include <iostream>
+
+#include "color.h"
+#include "display.h"
+#include "draw.h"
+#include "framebuffer.h"
+#include "model.h"
+#include "transform.h"
 
 constexpr int WINDOW_WIDTH = 960;
 constexpr int WINDOW_HEIGHT = 960;

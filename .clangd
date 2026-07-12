@@ -1,0 +1,9 @@
+CompileFlags:
+  # Use the CMake-generated compilation database for .cpp files.
+  CompilationDatabase: build
+  # Also apply these to files not in the DB (e.g. headers opened on their own),
+  # so clangd doesn't fall back to non-C++20 defaults and flag valid code.
+  Add:
+    - -std=gnu++20
+    - -Isrc
+    - -Iextern/vml/include

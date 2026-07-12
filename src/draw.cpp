@@ -1,5 +1,9 @@
 #include "draw.h"
 
+#include <algorithm>
+#include <cstdlib>
+#include <utility>
+
 void line(vml::Vec2i p1, vml::Vec2i p2, Framebuffer& fb, Color color) {
   bool steep = std::abs(p1.x - p2.x) < std::abs(p1.y - p2.y);
   if (steep) {
@@ -53,7 +57,6 @@ void draw(const Model& model, Framebuffer& fb, const Viewport& vp,
     // Color fill = colorFromIndex(i);
     Color fill = dc.faceset_shading_color;
 
-
     switch (dc.rendering_style) {
       case rendering_style::wireframe:
         line(s0, s1, fb, dc.wireframe_color);
@@ -71,7 +74,7 @@ void draw(const Model& model, Framebuffer& fb, const Viewport& vp,
         bool ccw = det2D(f1 - f0, f2 - f0) < 0.f;
         if (ccw) continue;
 
-        float d012 = det2D(f1-f0, f2-f0);
+        float d012 = det2D(f1 - f0, f2 - f0);
         for (int y = y_min; y <= y_max; ++y) {
           for (int x = x_min; x <= x_max; ++x) {
             vml::Vec2f p(x + 0.5f, y + 0.5f);
@@ -82,10 +85,10 @@ void draw(const Model& model, Framebuffer& fb, const Viewport& vp,
 
             if ((d01p >= 0 && d12p >= 0 && d20p >= 0) ||
                 (d01p <= 0 && d12p <= 0 && d20p <= 0)) {
-                    float l0 = d12p/d012 ;
-                    float l1 = d20p/d012;
-                    float l2 = d01p/d012;
-                    fill = Color(l1 * 255, l1 * 255, l2 * 255, 255);
+              float l0 = d12p / d012;
+              float l1 = d20p / d012;
+              float l2 = d01p / d012;
+              fill = Color(l0 * 255, l1 * 255, l2 * 255, 255);
               fb.set(x, y, fill);
             }
           }

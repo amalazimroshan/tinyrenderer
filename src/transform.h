@@ -1,5 +1,4 @@
 #pragma once
-#include <cmath>
 #include <vml/matrix.hpp>
 
 vml::Mat4f rotateX(float angle);

@@ -1,9 +1,8 @@
 #pragma once
-#include <cmath>
-#include <vector>
 #include <vml/matrix.hpp>
 #include <vml/vector.hpp>
 
+#include "color.h"
 #include "framebuffer.h"
 #include "model.h"
 

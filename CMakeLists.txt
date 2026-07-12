@@ -9,6 +9,10 @@ project(tinyrenderer LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 
+# Emit build/compile_commands.json so clangd (Zed/VS Code) sees the real
+# include paths and flags. The .clangd file points clangd at build/.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 option(iwyu "Run include-what-you-use")
 if(iwyu)
   find_program(IWYU_EXE NAMES include-what-you-use REQUIRED)

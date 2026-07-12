@@ -2,11 +2,11 @@
 #include "framebuffer.h"
 
 struct Input {
-  bool w, s;       // +X / -X
-  bool a, d;       // +Y / -Y
-  bool q, e;       // +Z / -Z
-  bool z, x;       // scale down/up
-  bool shift;      // held = translate, released = rotate
+  bool w, s;   // +X / -X
+  bool a, d;   // +Y / -Y
+  bool q, e;   // +Z / -Z
+  bool z, x;   // scale down/up
+  bool shift;  // held = translate, released = rotate
 };
 
 bool init_display(int w, int h);

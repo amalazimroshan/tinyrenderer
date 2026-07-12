@@ -1,5 +1,7 @@
 #include "transform.h"
 
+#include <cmath>
+
 vml::Mat4f rotateX(float angle) {
   vml::Mat4f m = vml::Mat4f::identity();
   m(1, 1) = cos(angle);
