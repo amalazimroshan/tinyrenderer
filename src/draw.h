@@ -23,7 +23,7 @@ struct Viewport {
 
 inline float det2D(vml::Vec2f a, vml::Vec2f b) { return a.x * b.y - a.y * b.x; }
 
-vml::Vec2i apply_viewport(const Viewport& vp, vml::Vec4f v);
+vml::Vec3f apply_viewport(const Viewport& vp, vml::Vec3f v);
 void line(vml::Vec2i p1, vml::Vec2i p2, Framebuffer& fb, Color color);
 vml::Vec2i world2screen(vml::Vec3f v, int width, int height);
 void draw(const Model& model, Framebuffer& fb, const Viewport& vp,

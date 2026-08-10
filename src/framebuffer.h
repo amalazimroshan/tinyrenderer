@@ -8,6 +8,7 @@
 struct Framebuffer {
   int w, h;
   std::vector<std::uint8_t> data;
+  std::vector<float> depth;
 
   Framebuffer(const int w, const int h, const Color& fill);
 
@@ -21,4 +22,6 @@ struct Framebuffer {
   int height() const;
   void clear(const Color& c);
   const std::uint8_t* buffer() const;
+
+  float& depth_at(int x, int y);
 };
