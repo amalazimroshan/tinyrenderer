@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 
@@ -7,6 +8,8 @@
 #include "framebuffer.h"
 #include "model.h"
 #include "transform.h"
+#include "vml/matrix.hpp"
+#include "vml/vector.hpp"
 
 constexpr int WINDOW_WIDTH = 960;
 constexpr int WINDOW_HEIGHT = 960;
@@ -28,12 +31,16 @@ int main(int argc, char** argv) {
 
   Input input = {};
   float posX = 0, posY = 0;
-  float angleX = 0, angleY = 0, angleZ = 0;
+  float angleX = 0, angleY = 0.f, angleZ = 0;
   float scaleVal = 1.f;
   float rot_speed = 2.f;
   float move_speed = 1.f;
   float scale_speed = 1.f;
-
+  float camDist = 3.f;
+  float zoom_speed = 0.1;
+  float fovY = 45.f;
+  float focus_speed = 1.f;
+  const float radius = 1.03f, margin = 0.5f;
   draw_command dc = {
       .rendering_style = rendering_style::facet_shading,
       .wireframe_color = RED,
@@ -66,7 +73,24 @@ int main(int argc, char** argv) {
     if (input.x) scaleVal += scale_speed * dt;
     if (scaleVal < 0.1f) scaleVal = 0.1f;
 
-    dc.transform = translate(posX, posY, 0) * rotateX(angleX) *
+    if (input.up) camDist += zoom_speed * dt;
+    if (input.down) camDist -= zoom_speed * dt;
+    if (input.left) {
+      fovY += focus_speed;
+      std::cout << fovY << std::endl;
+    }
+    if (input.right) fovY -= focus_speed;
+
+    camDist = std::max(0.2f, camDist);
+
+    vml::Mat4f camera = lookat(vml::Vec3f(0, 0, camDist), vml::Vec3f(0, 0, 0),
+                               vml::Vec3f(0, 1, 0));
+    // float far = 5.f, near = 1.8f;
+    float near = std::max(0.1f, camDist - margin - radius);
+    float far = camDist + margin + radius;
+    float aspect = float(vp.xmax - vp.xmin) / float(vp.ymax - vp.ymin);
+    dc.transform = perspective(near, far, fovY, aspect) * camera *
+                   translate(posX, posY, 0) * rotateX(angleX) *
                    rotateY(angleY) * rotateZ(angleZ) *
                    scale(scaleVal, scaleVal, scaleVal);
 

@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <utility>
 
+#include "vml/matrix.hpp"
 #include "vml/vector.hpp"
 
 void line(vml::Vec2i p1, vml::Vec2i p2, Framebuffer& fb, Color color) {
@@ -33,12 +34,6 @@ void line(vml::Vec2i p1, vml::Vec2i p2, Framebuffer& fb, Color color) {
   }
 }
 
-vml::Vec2i world2screen(vml::Vec3f v, int width, int height) {
-  int sx = (v.x + 1.f) / 2.f * width;
-  int sy = ((-v.y) + 1.f) / 2.f * height;
-  return vml::Vec2i(sx, sy);
-}
-
 vml::Vec3f apply_viewport(const Viewport& vp, vml::Vec3f v) {
   float x = vp.xmin + (vp.xmax - vp.xmin) * (0.5f + 0.5f * v.x);
   float y = vp.ymin + (vp.ymax - vp.ymin) * (0.5f - 0.5f * v.y);
@@ -46,11 +41,12 @@ vml::Vec3f apply_viewport(const Viewport& vp, vml::Vec3f v) {
   return vml::Vec3f(x, y, z);
 }
 
-vml::Vec3f persp(vml::Vec4f v) {
-  constexpr float c = 3;
-  const float deno = (1 - v.z / c);
-  // const float deno = 1;
-  return vml::Vec3f{v.x / deno, v.y / deno, v.z / deno};
+vml::Vector<float, 3> perspective_divide(vml::Vector<float, 4> v) {
+  return vml::Vector<float, 3>{
+      v.x /= v.w,  //
+      v.y /= v.w,  //
+      v.z /= v.w   //
+  };
 }
 
 void draw(const Model& model, Framebuffer& fb, const Viewport& vp,
@@ -61,9 +57,9 @@ void draw(const Model& model, Framebuffer& fb, const Viewport& vp,
     vml::Vec4f vw1 = dc.transform * vml::Vec4f(model.verts[face[1]], 1.f);
     vml::Vec4f vw2 = dc.transform * vml::Vec4f(model.verts[face[2]], 1.f);
 
-    vml::Vec3f s0 = apply_viewport(vp, persp(vw0));
-    vml::Vec3f s1 = apply_viewport(vp, persp(vw1));
-    vml::Vec3f s2 = apply_viewport(vp, persp(vw2));
+    vml::Vec3f s0 = apply_viewport(vp, perspective_divide(vw0));
+    vml::Vec3f s1 = apply_viewport(vp, perspective_divide(vw1));
+    vml::Vec3f s2 = apply_viewport(vp, perspective_divide(vw2));
     // Color fill = colorFromIndex(i);
     Color fill = dc.faceset_shading_color;
     switch (dc.rendering_style) {
@@ -80,10 +76,9 @@ void draw(const Model& model, Framebuffer& fb, const Viewport& vp,
 
         vml::Vec2f f0(s0.x, s0.y), f1(s1.x, s1.y), f2(s2.x, s2.y);
 
-        bool ccw = det2D(f1 - f0, f2 - f0) < 0.f;
-        if (ccw) continue;
-
         float d012 = det2D(f1 - f0, f2 - f0);
+        if (d012 >= 0.f) continue;
+
         for (int y = y_min; y <= y_max; ++y) {
           for (int x = x_min; x <= x_max; ++x) {
             vml::Vec2f p(x + 0.5f, y + 0.5f);
@@ -99,7 +94,7 @@ void draw(const Model& model, Framebuffer& fb, const Viewport& vp,
               float l2 = d01p / d012;
               float z = l0 * s0.z + l1 * s1.z + l2 * s2.z;
               float& zref = fb.depth_at(x, y);
-              if (zref > z) {
+              if (z < zref) {
                 fill = Color(l0 * 255, l1 * 255, l2 * 255, 255);
                 zref = z;
                 fb.set(x, y, fill);

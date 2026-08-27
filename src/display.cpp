@@ -1,6 +1,7 @@
 #include "display.h"
 
 #include <SDL2/SDL.h>
+#include <SDL_scancode.h>
 
 #include <iostream>
 
@@ -75,6 +76,10 @@ bool poll_events(Input& input) {
   input.z = keys[SDL_SCANCODE_Z];
   input.x = keys[SDL_SCANCODE_X];
   input.shift = keys[SDL_SCANCODE_LSHIFT] || keys[SDL_SCANCODE_RSHIFT];
+  input.up = keys[SDL_SCANCODE_UP];
+  input.down = keys[SDL_SCANCODE_DOWN];
+  input.left = keys[SDL_SCANCODE_LEFT];
+  input.right = keys[SDL_SCANCODE_RIGHT];
 
   return true;
 }

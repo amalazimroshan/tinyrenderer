@@ -7,6 +7,8 @@ struct Input {
   bool q, e;   // +Z / -Z
   bool z, x;   // scale down/up
   bool shift;  // held = translate, released = rotate
+  bool up, down;
+  bool left, right;
 };
 
 bool init_display(int w, int h);
